@@ -27,7 +27,6 @@
     .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
     .row > *{flex:1}
 
-    input[type=file]{display:block; width:100%; padding:10px; border-radius:12px; border:1px dashed rgba(255,255,255,.2); color:var(--muted); background:rgba(255,255,255,.02)}
     .btn{appearance:none; border:0; padding:10px 14px; border-radius:12px; font-weight:600; color:#0b0f19; background:var(--accent); cursor:pointer}
     .btn.secondary{background:#24324d; color:var(--text)}
     .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.15); color:var(--text)}
@@ -37,8 +36,6 @@
     canvas, img{width:100%; max-height:320px; object-fit:contain; background:rgba(255,255,255,.03); border-radius:12px}
 
     .kv{display:grid; grid-template-columns: 110px 1fr; gap:8px; align-items:center; font-size:14px}
-    .kv .v{color:var(--text)}
-
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#1b2540; color:var(--text); font-size:12px}
     .pill.ok{background:#113524; color:#b9ffdc}
     .pill.warn{background:#3a2f11; color:#ffe2b1}
@@ -53,7 +50,6 @@
     .footer{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:10px}
     .progress{height:8px; width:100%; background:#1b253f; border-radius:999px; overflow:hidden}
     .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #9af); transition:width .2s}
-    small code{background:#081021; padding:2px 6px; border-radius:6px; color:#d7e5ff}
   </style>
   <!-- Tesseract.js CDN（需網路） -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -67,28 +63,36 @@
   </header>
 
   <main class="wrap grid">
+    <!-- 紅包袋：姓名 -->
     <section class="card" id="sec-name">
       <h2>① 紅包袋：抓名字</h2>
       <div class="row">
-        <input id="nameFile" type="file" accept="image/*" capture="environment" />
-        <button class="btn" id="btnNameOcr">開始辨識</button>
+        <button class="btn" id="btnNameCamera">拍照（相機）</button>
+        <button class="btn secondary" id="btnNameLibrary">從相簿選擇</button>
+        <button class="btn" id="btnNameOcr">重新辨識</button>
+        <input id="nameCamera" type="file" accept="image/*" capture="environment" hidden />
+        <input id="nameLibrary" type="file" accept="image/*" hidden />
       </div>
       <div class="preview" id="namePreview"></div>
       <div class="progress" aria-hidden="true"><div class="bar" id="nameProg"></div></div>
       <div style="margin-top:8px" class="kv">
         <div class="k">辨識結果</div>
-        <div class="v"><input id="nameText" placeholder="可手動修正名字" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);color:var(--text)"/></div>
+        <div class="v"><input id="nameText" placeholder="可手動修正名字" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);color:#eaf2ff"/></div>
         <div class="k">提示</div>
         <div class="v hint">盡量讓相機直對收件人姓名。若字跡手寫不清楚，請手動修正。</div>
       </div>
     </section>
 
+    <!-- 鈔票：面額加總 -->
     <section class="card" id="sec-cash">
       <h2>② 鈔票：抓面額並加總</h2>
       <div class="row">
-        <input id="cashFile" type="file" accept="image/*" capture="environment" multiple />
-        <button class="btn" id="btnCashOcr">開始辨識</button>
-        <button class="btn secondary" id="btnClearCash" title="清除已選鈔票">清除</button>
+        <button class="btn" id="btnCashCamera">拍鈔票（相機）</button>
+        <button class="btn secondary" id="btnCashLibrary">從相簿選擇（可多張）</button>
+        <button class="btn" id="btnCashOcr">重新辨識</button>
+        <button class="btn ghost" id="btnClearCash" title="清除已選鈔票">清除</button>
+        <input id="cashCamera" type="file" accept="image/*" capture="environment" hidden />
+        <input id="cashLibrary" type="file" accept="image/*" hidden multiple />
       </div>
       <div class="preview" id="cashPreview"></div>
       <div class="progress" aria-hidden="true"><div class="bar" id="cashProg"></div></div>
@@ -96,12 +100,13 @@
         <div class="k">辨識面額</div>
         <div class="v" id="denoList" class="hint">尚未辨識</div>
         <div class="k">總金額</div>
-        <div class="v"><input id="totalAmount" type="number" inputmode="numeric" min="0" step="100" placeholder="0" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);color:var(--text)"/></div>
+        <div class="v"><input id="totalAmount" type="number" inputmode="numeric" min="0" step="100" placeholder="0" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);color:#eaf2ff"/></div>
         <div class="k">提示</div>
         <div class="v hint">會以 OCR 文字中找到的 100 / 200 / 500 / 1000 / 2000 做統計。若誤判可手動覆寫「總金額」。</div>
       </div>
     </section>
 
+    <!-- 清單 & 匯出 -->
     <section class="card" id="sec-list" style="grid-column:1/-1">
       <h2>③ 新增到清單 & 匯出</h2>
       <div class="row">
@@ -124,13 +129,15 @@
   </main>
 
   <script>
-    // ====== 狀態與工具 ======
-    const $ = (sel, el=document) => el.querySelector(sel);
+    // ====== 小工具 ======
+    const $  = (sel, el=document) => el.querySelector(sel);
     const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 
     const state = {
       nextId: Number(localStorage.getItem('hb_nextId')||'1'),
-      rows: JSON.parse(localStorage.getItem('hb_rows')||'[]') // {id, name, amount}
+      rows: JSON.parse(localStorage.getItem('hb_rows')||'[]'), // {id, name, amount}
+      selectedNameFile: null,
+      selectedCashFiles: []
     };
 
     const saveState = () => {
@@ -147,9 +154,6 @@
       setTimeout(()=>{ el.textContent='未變更'; el.className = 'pill'; }, 1600);
     };
 
-    const moneySum = (arr) => arr.reduce((a,b)=>a+b,0);
-
-    // ====== Tesseract 載入提示 ======
     const ensureTesseract = () => {
       if (!window.Tesseract) { alert('Tesseract.js 未載入'); return false; }
       return true;
@@ -166,19 +170,14 @@
       });
     };
 
-    // ====== OCR：名字（傳統中文優先，英數備援） ======
+    // ====== 姓名 OCR（繁中） ======
     const runNameOCR = async (file) => {
       if (!ensureTesseract() || !file) return '';
       const bar = $('#nameProg'); bar.style.width='0%';
       const worker = await Tesseract.createWorker('chi_tra', 1, {
-        logger: m => {
-          if (m.status==='recognizing text' && m.progress) bar.style.width = (m.progress*100).toFixed(0)+'%';
-        }
+        logger: m => { if (m.status==='recognizing text' && m.progress) bar.style.width = (m.progress*100).toFixed(0)+'%'; }
       });
-      // 僅保留常見姓名字元（中英、點號、空白）
-      const { data: { text } } = await worker.recognize(file, {
-        tessedit_char_blacklist: '0123456789',
-      });
+      const { data: { text } } = await worker.recognize(file, { tessedit_char_blacklist: '0123456789' });
       await worker.terminate();
       const cleaned = (text||'')
         .replace(/[\s\t\n]+/g,' ')
@@ -187,36 +186,72 @@
       return cleaned;
     };
 
-    // ====== OCR：鈔票面額（僅數字，統計 100/200/500/1000/2000） ======
-    const VALID = [2000,1000,500,200,100];
-    const runCashOCR = async (files) => {
+    // ====== 鈔票 OCR：前處理 + 英數/繁中雙模型 ======
+    const HB_MAP_ZH = [
+      {k:/貳仟|貮仟|贰仟/g, v:2000},
+      {k:/壹仟|一千/g,           v:1000},
+      {k:/伍佰|五百/g,           v:500},
+      {k:/貳佰|貮佰|贰佰|二百/g, v:200},
+      {k:/壹佰|一百/g,           v:100},
+    ];
+
+    const hbPreprocess = async (file, rotate180=false) => new Promise((resolve)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const cvs = document.createElement('canvas');
+        cvs.width = w; cvs.height = h;
+        const ctx = cvs.getContext('2d');
+        if (rotate180){ ctx.translate(w,h); ctx.rotate(Math.PI); }
+        ctx.drawImage(img,0,0);
+        const imgData = ctx.getImageData(0,0,w,h);
+        const d = imgData.data;
+        for(let i=0;i<d.length;i+=4){
+          const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+          const c = Math.max(0, Math.min(255, (g-128)*1.25 + 128)); // 提升對比
+          const bw = c > 160 ? 255 : 0; // 簡單二值化
+          d[i]=d[i+1]=d[i+2]=bw; d[i+3]=255;
+        }
+        ctx.putImageData(imgData,0,0);
+        resolve(cvs);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    const hbTextToDenoms = (text) => {
+      const out=[]; if(!text) return out;
+      const norm = text.replace(/[O〇Ｏ]/g,'0').replace(/[Il１Ⅰ]/g,'1').replace(/[\s,\.，]+/g,'');
+      [['2000',2000],['1000',1000],['500',500],['200',200],['100',100]].forEach(([p,v])=>{
+        const m = norm.match(new RegExp(p,'g'))||[]; m.forEach(()=>out.push(v));
+      });
+      return out;
+    };
+
+    const smartRunCashOCR = async (files) => {
       if (!ensureTesseract() || !files?.length) return { list:[], total:0 };
       const bar = $('#cashProg'); bar.style.width='0%';
-      // 僅載入英數即可，速度較快
-      const worker = await Tesseract.createWorker('eng', 1, {
-        logger: m => {
-          if (m.status==='recognizing text' && m.progress) bar.style.width = (m.progress*100).toFixed(0)+'%';
-        }
-      });
-      const found = [];
+      const workerEng = await Tesseract.createWorker('eng', 1, { logger: m => { if (m.status==='recognizing text' && m.progress) bar.style.width=(m.progress*100).toFixed(0)+'%'; } });
+      const workerZh  = await Tesseract.createWorker('chi_tra', 1);
+      const found=[];
       for (const f of files) {
-        const { data: { text } } = await worker.recognize(f, {
-          tessedit_char_whitelist: '0123456789',
-        });
-        const nums = (text||'')
-          .replace(/\s+/g,' ')
-          .match(/\b(100|200|500|1000|2000)\b/g) || [];
-        // 對常見誤判做點簡單處理（例如 1000 被切成 100 0）
-        // 這裡先直接統計命中的 token
-        nums.forEach(n => found.push(Number(n)));
+        const c0 = await hbPreprocess(f,false);
+        const c1 = await hbPreprocess(f,true);
+        const r1 = await workerEng.recognize(c0, { tessedit_char_whitelist:'0123456789' });
+        const r2 = await workerEng.recognize(c1, { tessedit_char_whitelist:'0123456789' });
+        hbTextToDenoms(r1.data.text).forEach(v=>found.push(v));
+        hbTextToDenoms(r2.data.text).forEach(v=>found.push(v));
+        const rz0 = await workerZh.recognize(c0);
+        const rz1 = await workerZh.recognize(c1);
+        const zhAll = (rz0.data.text + ' ' + rz1.data.text);
+        HB_MAP_ZH.forEach(({k,v})=>{ const hits = zhAll.match(k)||[]; hits.forEach(()=>found.push(v)); });
       }
-      await worker.terminate();
-      // 將命中的 token 彙整統計
-      const counts = VALID.reduce((acc,v)=>{acc[v]=0;return acc;},{});
-      found.forEach(v=>{ if (VALID.includes(v)) counts[v]++; });
+      await workerEng.terminate();
+      await workerZh.terminate();
+      const counts = {2000:0,1000:0,500:0,200:0,100:0};
+      found.forEach(v=>{ if (counts.hasOwnProperty(v)) counts[v]++; });
       const list = Object.entries(counts).filter(([,c])=>c>0).map(([v,c])=>({value:Number(v), count:c}));
-      const total = list.reduce((s, it) => s + it.value*it.count, 0);
-      return { list, total };
+      const total = list.reduce((s,it)=>s+it.value*it.count,0);
+      return {list,total};
     };
 
     // ====== 表格渲染 ======
@@ -232,45 +267,56 @@
         const delBtn = document.createElement('button'); delBtn.className='btn ghost'; delBtn.textContent='刪'; delBtn.style.padding='6px 10px'; delBtn.onclick=()=>{ state.rows = state.rows.filter(r=>r.id!==id); saveState(); };
         tdDel.appendChild(delBtn);
         tr.append(tdId, tdName, tdAmt, tdDel);
-        // 編輯事件
         tdName.addEventListener('blur', ()=>{ const r = state.rows.find(r=>r.id===id); r.name = tdName.textContent.trim(); saveState(); });
         tdAmt.addEventListener('blur', ()=>{ const r = state.rows.find(r=>r.id===id); r.amount = Number(tdAmt.textContent.replace(/[^0-9]/g,''))||0; tdAmt.textContent=r.amount; saveState(); });
         tbody.appendChild(tr);
       });
     };
 
-    // ====== 事件綁定 ======
-    $('#btnNameOcr').addEventListener('click', async ()=>{
-      const f = $('#nameFile').files?.[0];
-      if (!f) { alert('請先選擇紅包袋照片'); return; }
+    // ====== 事件：姓名 ======
+    const doNameOCR = async (f) => {
+      if (!f) return;
+      state.selectedNameFile = f;
       renderPreviews([f], $('#namePreview'));
       $('#nameText').value = '辨識中…';
       const text = await runNameOCR(f);
       $('#nameText').value = text || '';
-    });
+    };
+    $('#btnNameOcr').addEventListener('click', ()=> state.selectedNameFile ? doNameOCR(state.selectedNameFile) : alert('請先選擇紅包袋照片'));
+    $('#btnNameCamera').addEventListener('click', ()=> $('#nameCamera').click());
+    $('#btnNameLibrary').addEventListener('click', ()=> $('#nameLibrary').click());
+    $('#nameCamera').addEventListener('change', (e)=>{ const f = e.target.files?.[0]; if (f) doNameOCR(f); });
+    $('#nameLibrary').addEventListener('change', (e)=>{ const f = e.target.files?.[0]; if (f) doNameOCR(f); });
 
-    $('#btnCashOcr').addEventListener('click', async ()=>{
-      const files = $('#cashFile').files;
-      if (!files || files.length===0) { alert('請先選擇鈔票照片（可多張）'); return; }
-      renderPreviews(files, $('#cashPreview'));
+    // ====== 事件：鈔票 ======
+    const doCashOCR = async (files) => {
+      if (!files || !files.length) return;
+      state.selectedCashFiles = Array.from(files);
+      renderPreviews(state.selectedCashFiles, $('#cashPreview'));
       $('#denoList').innerHTML = '辨識中…';
-      const { list, total } = await runCashOCR(files);
+      const { list, total } = await smartRunCashOCR(state.selectedCashFiles);
       if (!list.length) {
         $('#denoList').innerHTML = '<span class="pill warn">未偵測到面額，請調整角度/光線或手動輸入</span>';
       } else {
         $('#denoList').innerHTML = list.map(it=>`<span class="pill">$${it.value} × ${it.count}</span>`).join(' ');
       }
       $('#totalAmount').value = String(total||0);
-    });
+    };
+    $('#btnCashOcr').addEventListener('click', ()=> state.selectedCashFiles.length ? doCashOCR(state.selectedCashFiles) : alert('請先選擇鈔票照片'));
+    $('#btnCashCamera').addEventListener('click', ()=> $('#cashCamera').click());
+    $('#btnCashLibrary').addEventListener('click', ()=> $('#cashLibrary').click());
+    $('#cashCamera').addEventListener('change', (e)=>{ const f = e.target.files?.[0]; if (f) doCashOCR([f]); });
+    $('#cashLibrary').addEventListener('change', (e)=>{ const fs = e.target.files; if (fs && fs.length) doCashOCR(fs); });
 
     $('#btnClearCash').addEventListener('click', ()=>{
-      $('#cashFile').value = '';
+      state.selectedCashFiles = [];
       $('#cashPreview').innerHTML = '';
       $('#denoList').textContent = '尚未辨識';
       $('#totalAmount').value = '';
       $('#cashProg').style.width='0%';
     });
 
+    // ====== 新增/編號/匯出 ======
     $('#btnAdd').addEventListener('click', ()=>{
       const name = $('#nameText').value.trim();
       const amount = Number($('#totalAmount').value||'0');
@@ -296,7 +342,7 @@
         const s = String(v??'');
         return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
       }).join(',')).join('\n');
-      const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8;'}); // 加 BOM 讓 Excel 正確顯示中文
+      const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'redpack_records.csv';
@@ -305,6 +351,23 @@
     });
 
     // 起始渲染
+    const tbody = $('#tbody');
+    const renderTable = () => {
+      tbody.innerHTML = '';
+      state.rows.forEach(({id,name,amount})=>{
+        const tr = document.createElement('tr');
+        const tdId = document.createElement('td'); tdId.textContent = id;
+        const tdName = document.createElement('td'); tdName.textContent = name; tdName.contentEditable = 'true';
+        const tdAmt = document.createElement('td'); tdAmt.textContent = amount; tdAmt.contentEditable = 'true'; tdAmt.inputMode='numeric';
+        const tdDel = document.createElement('td');
+        const delBtn = document.createElement('button'); delBtn.className='btn ghost'; delBtn.textContent='刪'; delBtn.style.padding='6px 10px'; delBtn.onclick=()=>{ state.rows = state.rows.filter(r=>r.id!==id); saveState(); };
+        tdDel.appendChild(delBtn);
+        tr.append(tdId, tdName, tdAmt, tdDel);
+        tdName.addEventListener('blur', ()=>{ const r = state.rows.find(r=>r.id===id); r.name = tdName.textContent.trim(); saveState(); });
+        tdAmt.addEventListener('blur', ()=>{ const r = state.rows.find(r=>r.id===id); r.amount = Number(tdAmt.textContent.replace(/[^0-9]/g,''))||0; tdAmt.textContent=r.amount; saveState(); });
+        tbody.appendChild(tr);
+      });
+    };
     renderTable();
   </script>
 </body>
